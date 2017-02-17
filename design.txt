@@ -1,0 +1,80 @@
+Main
+	httpServer.start(
+		new creator.Controller(new Repository),		
+		...
+		);
+
+
+deck_editor
+	creator
+		+Controller		
+			POST .../decks { title }
+		Creator
+
+	changer
+		Changer
+			PUT .../decks/:id { title }
+
+	DeckChangeDto (id, title)
+	Repository
+		-> DECK_CHANGED
+
+deck_remover
+	+Controller
+		DELETE .../decks/:id
+	Remover
+	DeckRemovedDto (id)
+	Repository
+		-> DECK_REMOVED
+
+
+
+card_editor
+	creator
+		+Controller
+			POST .../decks/:id/cards { front, back }
+		CardCreator
+		CardChanged (cardId, front, back)
+
+	changer
+		+Controller
+		 	PUT .../decks/:id/cards/:id { front, back }
+		 	PUT .../cards/:id { front, back }
+		ChangeNotifier
+		CardChanged (cardId, newFront, newBack)
+		Repository
+			<- CARD_DELETED
+
+	Repository
+		-> CARD_CHANGED
+
+card_remover
+	+Controller
+		DELETE .../cards/:id
+	Repository
+	-> CARD_DELETED
+
+practice_session_getter
+	+Controller
+		GET .../decks/:id/practice-session/:no-of-cards
+			-> Gives a collection of cards
+	PracticeSessionGetter
+		visitedBonus(1) + daysSinceLastVisited - Math.pow(Math.max(0, winStreak.get - 3), 2).toInt
+	Statistics
+	Repository
+		<- CARD_CHANGED
+		<- CARD_DELETED
+		<- CARD_STATISTICS
+
+		SELECT card from ... not in (select ...)
+
+
+
+win_lose_processor
+	+Controller
+		POST .../card/:id/win
+		POST .../card/:id/lose
+	WinLoseProcessor
+	Outcome
+	Repository
+		-> CARD_STATISTICS
