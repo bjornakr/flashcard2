@@ -4,7 +4,9 @@ import deck.editor.creator.{Controller, CreatorService, DeckChangedTable, Reposi
 import deck.remover.DeckDeletedTable
 import main.Main
 import org.http4s._
+import org.http4s.client.Client
 import org.http4s.client.blaze.PooledHttp1Client
+import org.http4s.server.Server
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, WordSpec}
 import scodec.bits.ByteVector
 
@@ -16,11 +18,15 @@ import slick.lifted.TableQuery
 abstract class ApiBaseSpec extends WordSpec with BeforeAndAfter with BeforeAndAfterAll {
     protected val db: _root_.slick.driver.H2Driver.backend.DatabaseDef =
         Database.forURL("jdbc:h2:mem:test1;DATABASE_TO_UPPER=false;DB_CLOSE_DELAY=-1", driver = "org.h2.Driver")
-    private val main = new Main(new Controller(new CreatorService(new Repository(db))))
-    private val server = main.createServer
-    private var client = PooledHttp1Client()
+    private val main = new Main(
+        new Controller(new CreatorService(new Repository(db))),
+        new deck.remover.Controller(new deck.remover.RemoverService(new deck.remover.Repository(db)))
+    )
+    private val testPort = 8070
+    private var server: Server = _ // = main.createServer(8070)
+    private var client: Client = _
 
-    protected val baseUri: Uri = Uri.fromString("http://localhost:8070/api").valueOr(e => throw e)
+    protected val baseUri: Uri = Uri.fromString(s"http://localhost:$testPort/api").valueOr(e => throw e)
 
     protected def executeRequest(method: Method, uri: Uri): Response =
         executeRequest(method, uri, EmptyBody)
@@ -80,6 +86,12 @@ abstract class ApiBaseSpec extends WordSpec with BeforeAndAfter with BeforeAndAf
         //        Await.result(createDecks, Duration.Inf)
         //        val createCards = cardDao.saveAll(allCards)
         //        Await.result(createCards, Duration.Inf)
+    }
+
+
+    override def beforeAll: Unit = {
+        server = main.createServer(testPort)
+
     }
 
     before {

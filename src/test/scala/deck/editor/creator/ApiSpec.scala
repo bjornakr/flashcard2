@@ -10,10 +10,10 @@ import io.circe.syntax._
 import org.http4s._
 
 
-class ControllerSpec extends ApiBaseSpec {
+class ApiSpec extends ApiBaseSpec {
     override protected def fillDatabase(): Unit = ()
 
-    private val deckUri = baseUri / "decks"
+    private val deckUri = baseUri / "deck" / "creator"
 
     s"POST $deckUri" when {
         "database error" should {
@@ -66,7 +66,7 @@ class ControllerSpec extends ApiBaseSpec {
         }
 
         "valid request" should {
-            "give 201 Created w/ ChangeEventResult" in {
+            "give 201 Created w/ { deckId, title }" in {
                 val title = "Test Deck"
                 val request = CreateRequest(title)
                 val body = toBody(request.asJson.noSpaces)

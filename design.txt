@@ -9,11 +9,15 @@ deck_editor
 	creator
 		+Controller		
 			POST .../decks { title }
+			vs
+			POST .../deck-creator { title }
 		Creator
 
 	changer
 		Changer
 			PUT .../decks/:id { title }
+			vs
+			POST .../deck-changer/:id { title }
 
 	DeckChangeDto (id, title)
 	Repository
@@ -22,6 +26,8 @@ deck_editor
 deck_remover
 	+Controller
 		DELETE .../decks/:id
+		vs
+		POST .../deck-remover/:id
 	Remover
 	DeckRemovedDto (id)
 	Repository
