@@ -3,6 +3,7 @@ package deck.editor.creator
 import java.util.UUID
 
 import common.DatabaseError
+import deck.remover.DeckDeletedTable
 import slick.driver.H2Driver.api._
 import org.scalatest.{BeforeAndAfter, BeforeAndAfterAll, WordSpec}
 import org.http4s._
@@ -44,11 +45,18 @@ class ControllerSpec extends WordSpec with BeforeAndAfter with BeforeAndAfterAll
     private def extractBody(r: Response): String =
         EntityDecoder.decodeString(r).run
 
-    private val events = TableQuery[DeckChangedTable]
+    private val deckChangedTable = TableQuery[DeckChangedTable]
+    private val deckDeletedTable = TableQuery[DeckDeletedTable]
 
-    private val dropTablesAction = slick.dbio.DBIO.seq(events.schema.drop)
+    private val dropTablesAction = slick.dbio.DBIO.seq(
+        deckChangedTable.schema.drop,
+        deckDeletedTable.schema.drop
+    )
 
-    private val createTablesAction = slick.dbio.DBIO.seq(events.schema.create)
+    private val createTablesAction = slick.dbio.DBIO.seq(
+        deckChangedTable.schema.create,
+        deckDeletedTable.schema.create
+    )
 
     def clearDatabase(): Unit = {
 

@@ -99,14 +99,14 @@ private object ChangedEvent {
 
 // REPO
 
-private class Repository(db: Database) {
+class Repository(db: Database) {
     type AffectedRowsCount = Int
     private val deckChangedTable = TableQuery[DeckChangedTable]
     //private val insertQuery = deckChangedTable returning deckChangedTable.map(_.id) into ((dto, id) => dto.copy(id = id))
     private val insertQuery = deckChangedTable returning deckChangedTable.map(_.id) into ((dto, id) => DeckChangedRowMapper.toDomain(dto.copy(id = id)))
 
 
-    def save(event: ChangedEvent): Future[ChangedEvent] = {
+    private[creator] def save(event: ChangedEvent): Future[ChangedEvent] = {
         val action = insertQuery += DeckChangedRowMapper.fromDomain(event)
         //val f1 = db.run(deckChangedTable += DeckChangedRowMapper.fromDomain(event))
         db.run(action)
