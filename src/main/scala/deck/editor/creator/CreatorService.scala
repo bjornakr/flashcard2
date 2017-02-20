@@ -58,7 +58,7 @@ class Controller(appService: CreatorService) {
 
 // APPLICATION
 
-case class CreateRequest(title: String)
+case class CreateRequest(title: String) // TODO: Option? Would allow more spesific error message.
 
 class CreatorService(repository: Repository) {
     private[creator] def save(request: CreateRequest): Either[ErrorMessage, ChangedEventResult] = {
