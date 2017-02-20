@@ -25,17 +25,6 @@ import scalaz.concurrent.Task
 // TODO: Revise naming
 // TODO: Logging
 class Controller(appService: CreatorService) {
-    def decideStatus(message: ErrorMessage): Task[Response] = {
-        message match {
-            case InvalidId(_, _) => NotFound(message.message)
-            case InvalidIdFormat(_) => BadRequest(message.message)
-            case CannotBeEmpty(_) => BadRequest(message.message)
-            case DatabaseError => InternalServerError(message.message)
-            case _ => NotFound(message.message)
-        }
-    }
-
-
     val httpService = HttpService {
         case request@POST -> Root => {
             val body = EntityDecoder.decodeString(request).run
@@ -45,7 +34,7 @@ class Controller(appService: CreatorService) {
                 case Xor.Left(_) => BadRequest("Error parsing body.")
                 case Xor.Right(a) => {
                     appService.save(a) match {
-                        case Left(err) => decideStatus(err)
+                        case Left(err) => ErrorToHttpStatus(err)
                         case Right(a) => Created(a.asJson.noSpaces)
                     }
                 }

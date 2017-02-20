@@ -96,7 +96,7 @@ class ControllerSpec extends WordSpec with BeforeAndAfter with BeforeAndAfterAll
         Database.forURL("jdbc:h2:mem:test1").close()
     }
 
-    "POST" when {
+    s"POST $baseUri" when {
         "database error" should {
             // TODO: Log errors
 
