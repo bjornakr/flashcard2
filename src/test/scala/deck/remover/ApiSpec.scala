@@ -2,7 +2,7 @@ package deck.remover
 
 import java.sql.Timestamp
 
-import common.ApiBaseSpec
+import common.{ApiBaseSpec, CouldNotFindEntityWithId, InvalidIdFormat}
 import deck.editor.creator.DeckChangedRow
 import io.circe.Decoder._
 import io.circe.generic.auto._
@@ -22,6 +22,16 @@ class ApiSpec extends ApiBaseSpec {
     }
 
     s"POST $removerUri/:id" when {
+        "database error" should {
+            "give 500 Internal Server Error" in {
+                clearDatabase()
+
+                val uri = removerUri / existingDeckId
+                val response = executeRequest(Method.POST, uri)
+                assert(response.status == Status.InternalServerError)
+            }
+        }
+
         "valid id" should {
             "give 201 Created w/ { deckId }" in {
                 val uri = removerUri / existingDeckId
@@ -34,24 +44,26 @@ class ApiSpec extends ApiBaseSpec {
             }
         }
 
-        "wrong UUID format" should {
-            "give 402 Bad Request w/ error message" ignore {
-                val uri = removerUri / "Not a UUID."
-                val response = executeRequest(Method.DELETE, uri)
+        "invalid UUID format" should {
+            "give 400 Bad Request w/ error message" in {
+                val uri = removerUri / "xxxxx"
+                val response = executeRequest(Method.POST, uri)
                 assert(response.status == Status.BadRequest)
 
-                // TODO: Verify error
+                val responseBody = extractBody(response)
+                assert(responseBody == InvalidIdFormat("xxxxx").message)
             }
         }
 
         "no deck with id" should {
-            "give 404 Not Found w/ error message" ignore {
+            "give 404 Not Found w/ error message" in {
                 val id = "00000000-0000-0000-0000-999999999999"
                 val uri = removerUri / id
-                val response = executeRequest(Method.DELETE, uri)
+                val response = executeRequest(Method.POST, uri)
                 assert(response.status == Status.NotFound)
 
-                // TODO: Verify error
+                val responseBody = extractBody(response)
+                assert(responseBody == CouldNotFindEntityWithId("Deck", id).message)
             }
         }
     }
