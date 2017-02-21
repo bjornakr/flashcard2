@@ -5,7 +5,8 @@ import java.time.ZonedDateTime
 import java.util.UUID
 
 import common.{UuidParser, _}
-import deck.editor.creator.DeckChangedTable
+import deck.BaseRepository
+import deck.editor.DeckChangedTable
 import io.circe.generic.auto._
 import io.circe.syntax._
 import org.http4s.HttpService
@@ -44,7 +45,7 @@ class RemoverService(repository: Repository) {
             }
         }
 
-        val future = repository.createdDeckIds
+        val future = repository.existingDeckIds
 
         Await.ready(future, DurationInt(3).seconds).value.get match {
 
@@ -70,9 +71,9 @@ case class Result(deckId: String)
 
 // DOMAIN
 
-abstract case class Event(deckId: UUID)
+private abstract case class Event(deckId: UUID)
 
-object Event {
+private object Event {
     def apply(deckId: UUID, createdDeckIds: Seq[UUID]): Either[ErrorMessage, Event] = {
         if (createdDeckIds.contains(deckId))
             Right(new Event(deckId) {})
@@ -97,16 +98,16 @@ class DeckDeletedTable(tag: Tag) extends Table[DeckDeletedRow](tag, "deck_delete
     def * : ProvenShape[DeckDeletedRow] = (id, t, deckId) <> (DeckDeletedRow.tupled, DeckDeletedRow.unapply)
 }
 
-class Repository(db: Database) {
+class Repository(db: Database) extends BaseRepository(db) {
 
-    def createdDeckIds: Future[Seq[String]] = {
-        val query = TableQuery[DeckChangedTable]
-            .groupBy(r => r.deckId)
-            .map { case (id, g) => id }
-
-        //        val query = TableQuery[DeckChangedTable].filter(_.deckId === deckId)
-        db.run(query.result)
-    }
+//    def createdDeckIds: Future[Seq[String]] = {
+//        val query = TableQuery[DeckChangedTable]
+//            .groupBy(r => r.deckId)
+//            .map { case (id, g) => id }
+//
+//        //        val query = TableQuery[DeckChangedTable].filter(_.deckId === deckId)
+//        db.run(query.result)
+//    }
 
     def save(event: Event): Future[Result] = {
         val deckDeletedTable = TableQuery[DeckDeletedTable]

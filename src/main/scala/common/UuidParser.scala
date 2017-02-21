@@ -8,6 +8,6 @@ object UuidParser {
             Right(UUID.fromString(id))
         }
         catch {
-            case e: IllegalArgumentException => Left(InvalidIdFormat(id))
+            case e: IllegalArgumentException => Left(InvalidUuidFormat(id))
         }
 }

@@ -4,15 +4,18 @@ import org.http4s.server.Server
 import org.http4s.server.blaze._
 
 class Main(
-              deckEditorCreator: deck.editor.creator.Controller,
+              deckCreator: deck.editor.creator.Controller,
+              deckChanger: deck.editor.changer.Controller,
               deckRemover: deck.remover.Controller
+
           ) {
 
     def createServer: Server = createServer(8070)
 
     def createServer(port: Int): Server = {
         val builder = BlazeBuilder.bindHttp(port, "localhost")
-            .mountService(deckEditorCreator.httpService, "/api/deck/creator")
+            .mountService(deckCreator.httpService, "/api/deck/creator")
+            .mountService(deckChanger.httpService, "/api/deck/changer")
             .mountService(deckRemover.httpService, "/api/deck/remover")
         builder.run
     }

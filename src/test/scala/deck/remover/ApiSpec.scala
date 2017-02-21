@@ -2,8 +2,8 @@ package deck.remover
 
 import java.sql.Timestamp
 
-import common.{ApiBaseSpec, CouldNotFindEntityWithId, InvalidIdFormat}
-import deck.editor.creator.DeckChangedRow
+import common.{ApiBaseSpec, CouldNotFindEntityWithId, InvalidUuidFormat}
+import deck.editor.DeckChangedRow
 import io.circe.Decoder._
 import io.circe.generic.auto._
 import io.circe.parser.decode
@@ -51,7 +51,7 @@ class ApiSpec extends ApiBaseSpec {
                 assert(response.status == Status.BadRequest)
 
                 val responseBody = extractBody(response)
-                assert(responseBody == InvalidIdFormat("xxxxx").message)
+                assert(responseBody == InvalidUuidFormat("xxxxx").message)
             }
         }
 

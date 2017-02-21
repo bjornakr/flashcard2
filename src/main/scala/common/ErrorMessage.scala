@@ -8,7 +8,7 @@ case class SpesificError(errorMessage: String) extends ErrorMessage {
     def message: String = errorMessage
 }
 
-case class InvalidIdFormat(id: String) extends ErrorMessage {
+case class InvalidUuidFormat(id: String) extends ErrorMessage {
     def message: String = "Invalid UUID format: " + id
 }
 

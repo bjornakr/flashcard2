@@ -1,6 +1,6 @@
 package deck.editor.changer
 
-import common.{ApiBaseSpec, CouldNotFindEntityWithId, DatabaseError}
+import common.{ApiBaseSpec, CouldNotFindEntityWithId, DatabaseError, InvalidUuidFormat}
 import deck.editor.{EventResponse, RequestDto}
 import org.http4s.{Method, Status}
 import io.circe.Decoder._
@@ -55,7 +55,7 @@ class DeckChangerApiSpec extends ApiBaseSpec {
                 assert(response.status == Status.BadRequest)
 
                 val responseBody = extractBody(response)
-                assert(responseBody == "Body parse error.")
+                assert(responseBody == s"Could not parse body into ${RequestDto.getClass.getCanonicalName}.")
             }
         }
 
@@ -66,7 +66,7 @@ class DeckChangerApiSpec extends ApiBaseSpec {
                 assert(response.status == Status.BadRequest)
 
                 val responseBody = extractBody(response)
-                assert(responseBody == "Body parse error.")
+                assert(responseBody == s"Could not parse body into ${RequestDto.getClass.getCanonicalName}.")
             }
         }
 
@@ -81,13 +81,14 @@ class DeckChangerApiSpec extends ApiBaseSpec {
 
         "invalid UUID format" should {
             "give 400 Bad Request w/ error message" in {
-                val uri = changerUri / "not-a-uuid"
+                val invalidUuid = "not-a-uuid"
+                val uri = changerUri / invalidUuid
                 val requestBody = toBody(RequestDto("New title").asJson.noSpaces)
                 val response = executeRequest(Method.POST, uri, requestBody)
                 assert(response.status == Status.BadRequest)
 
                 val responseBody = extractBody(response)
-                assert(responseBody == "Invalid id.")
+                assert(responseBody == InvalidUuidFormat(invalidUuid).message)
             }
         }
 
