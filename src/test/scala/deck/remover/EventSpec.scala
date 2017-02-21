@@ -13,7 +13,7 @@ class EventSpec extends WordSpec {
             UUID.randomUUID(),
             UUID.randomUUID()
         )
-        "deck already has been created" should {
+        "deck exists" should {
             "create Event" in {
                 val result = Event(createdDecks.head, createdDecks)
                 assert(result == Right(new Event(createdDecks.head) {}))

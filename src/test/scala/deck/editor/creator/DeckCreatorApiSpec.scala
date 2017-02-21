@@ -3,6 +3,7 @@ package deck.editor.creator
 import java.util.UUID
 
 import common.{ApiBaseSpec, DatabaseError}
+import deck.editor.{EventResponse, RequestDto}
 import io.circe.Decoder._
 import io.circe.generic.auto._
 import io.circe.parser._
@@ -10,7 +11,7 @@ import io.circe.syntax._
 import org.http4s._
 
 
-class ApiSpec extends ApiBaseSpec {
+class DeckCreatorApiSpec extends ApiBaseSpec {
     override protected def fillDatabase(): Unit = ()
 
     private val deckUri = baseUri / "deck" / "creator"
@@ -22,7 +23,7 @@ class ApiSpec extends ApiBaseSpec {
             "give 500 Internal Server Error w/ error message" in {
                 clearDatabase()
                 val title = "Test Deck"
-                val request = CreateRequest(title)
+                val request = RequestDto(title)
                 val body = toBody(request.asJson.noSpaces)
                 val response = executeRequest(Method.POST, deckUri, body)
                 assert(response.status == Status.InternalServerError)
@@ -68,13 +69,13 @@ class ApiSpec extends ApiBaseSpec {
         "valid request" should {
             "give 201 Created w/ { deckId, title }" in {
                 val title = "Test Deck"
-                val request = CreateRequest(title)
+                val request = RequestDto(title)
                 val body = toBody(request.asJson.noSpaces)
                 val response = executeRequest(Method.POST, deckUri, body)
                 assert(response.status == Status.Created)
 
                 val responseBody = extractBody(response)
-                val eventResponse = decode[ChangedEventResult](responseBody).valueOr(e => throw e)
+                val eventResponse = decode[EventResponse](responseBody).valueOr(e => throw e)
 
                 UUID.fromString(eventResponse.deckId) // Checking id integrity
                 assert(eventResponse.title == title)

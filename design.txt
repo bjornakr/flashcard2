@@ -60,7 +60,7 @@ card_remover
 	Repository
 	-> CARD_DELETED
 
-practice_session_getter
+practice_session_creator
 	+Controller
 		GET .../decks/:id/practice-session/:no-of-cards
 			-> Gives a collection of cards
