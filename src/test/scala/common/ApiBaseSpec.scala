@@ -19,7 +19,7 @@ abstract class ApiBaseSpec extends WordSpec with BeforeAndAfter with BeforeAndAf
     protected val db: _root_.slick.driver.H2Driver.backend.DatabaseDef =
         Database.forURL("jdbc:h2:mem:test1;DATABASE_TO_UPPER=false;DB_CLOSE_DELAY=-1", driver = "org.h2.Driver")
     private val main = new Main(
-        new deck.editor.creator.Controller(new deck.editor.creator.CreatorService(new deck.editor.Repository(db))),
+        new deck.editor.creator.Controller(new deck.editor.creator.AppService(new deck.editor.Repository(db))),
         new deck.editor.changer.Controller(new deck.editor.changer.AppService(new deck.editor.Repository(db))),
         new deck.remover.Controller(new deck.remover.RemoverService(new deck.remover.Repository(db)))
     )

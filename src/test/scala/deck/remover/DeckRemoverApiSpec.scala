@@ -10,7 +10,7 @@ import io.circe.parser.decode
 import org.http4s.{Method, Status}
 import slick.driver.H2Driver.api._
 
-class ApiSpec extends ApiBaseSpec {
+class DeckRemoverApiSpec extends ApiBaseSpec {
     private val removerUri = baseUri / "deck" / "remover"
 
     private val existingDeckId = "00000000-0000-0000-0000-000000000001"

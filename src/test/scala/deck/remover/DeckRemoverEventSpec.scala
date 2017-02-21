@@ -5,7 +5,7 @@ import java.util.UUID
 import common.CouldNotFindEntityWithId
 import org.scalatest.WordSpec
 
-class EventSpec extends WordSpec {
+class DeckRemoverEventSpec extends WordSpec {
 
     "create [Deck][Remove]Event" when {
         val createdDecks = List(

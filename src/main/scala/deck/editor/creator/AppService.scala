@@ -1,31 +1,23 @@
 package deck.editor.creator
 
-import java.sql.Timestamp
-import java.time.{LocalDateTime, ZoneId, ZonedDateTime}
 import java.util.UUID
 
 import cats.data.Xor
 import common._
 import deck.editor._
-import org.http4s.{EntityDecoder, HttpService}
-import slick.driver.H2Driver.api._
-import slick.lifted.{ProvenShape, TableQuery, Tag}
-
-import scala.concurrent.duration.DurationInt
-import scala.concurrent.{Await, Future}
-import scala.util.{Failure, Success}
-import org.http4s.dsl.{Root, _}
-import org.http4s._
 import io.circe.generic.auto._
 import io.circe.parser._
 import io.circe.syntax._
+import org.http4s.dsl.{Root, _}
+import org.http4s.{EntityDecoder, HttpService}
 
-import scalaz.concurrent.Task
+import scala.concurrent.Await
+import scala.concurrent.duration.DurationInt
+import scala.util.{Failure, Success}
 
 
-// TODO: Revise naming
 // TODO: Logging
-class Controller(appService: CreatorService) {
+class Controller(appService: AppService) {
     val httpService = HttpService {
         case request@POST -> Root => {
             val body = EntityDecoder.decodeString(request).run
@@ -46,11 +38,7 @@ class Controller(appService: CreatorService) {
 }
 
 
-// APPLICATION
-
- // TODO: Option? Would allow more spesific error message.
-
-class CreatorService(repository: Repository) {
+class AppService(repository: Repository) {
     private[creator] def save(request: RequestDto): Either[ErrorMessage, EventResponse] = {
 
         def save(changedEvent: Event): Either[ErrorMessage, EventResponse] = {
@@ -68,28 +56,8 @@ class CreatorService(repository: Repository) {
             case Left(err) => Left(err)
             case Right(ce) => save(ce)
         }
-        //        ChangedEvent(title.getOrElse("")).right.map((ce: ChangedEvent) => save(ce))
-
     }
-
 }
-
-
-
-
-
-
-
-// DOMAIN
-
-
-
-
-
-
-// REPO
-
-
 
 
 

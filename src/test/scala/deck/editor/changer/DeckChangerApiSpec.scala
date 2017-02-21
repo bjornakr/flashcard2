@@ -1,18 +1,26 @@
 package deck.editor.changer
 
-import common.{ApiBaseSpec, CouldNotFindEntityWithId, DatabaseError, InvalidUuidFormat}
-import deck.editor.{EventResponse, RequestDto}
+import java.sql.Timestamp
+
+import common._
+import deck.editor.{DeckChangedRow, EventResponse, RequestDto}
 import org.http4s.{Method, Status}
 import io.circe.Decoder._
 import io.circe.generic.auto._
 import io.circe.parser._
 import io.circe.syntax._
+import slick.driver.H2Driver.api._
 
 class DeckChangerApiSpec extends ApiBaseSpec {
-    override protected def fillDatabase(): Unit = ()
+    private val existingDeckId = "00000000-0000-0000-0000-000000000001"
+
+    override protected def fillDatabase(): Unit = {
+        val deckCreatedEvent = DeckChangedRow(0, new Timestamp(System.currentTimeMillis()), existingDeckId, "Test Deck")
+        val action = slick.dbio.DBIO.seq(deckChangedTable += deckCreatedEvent)
+        db.run(action)
+    }
 
     private val changerUri = baseUri / "deck" / "changer"
-    private val existingDeckId = "00000000-0000-0000-0000-000000000001"
 
     s"POST $changerUri/:id" when {
         "database error" should {
@@ -101,11 +109,9 @@ class DeckChangerApiSpec extends ApiBaseSpec {
                 assert(response.status == Status.NotFound)
 
                 val responseBody = extractBody(response)
-                assert(responseBody == CouldNotFindEntityWithId("Deck", id))
+                assert(responseBody == CouldNotFindEntityWithId("Deck", id).message)
             }
         }
-
-        "missing [title] field in body" ignore {}
 
         "empty [title]" should {
             "give 401 Bad Request w/ error message" in {
@@ -115,7 +121,7 @@ class DeckChangerApiSpec extends ApiBaseSpec {
                 assert(response.status == Status.BadRequest)
 
                 val responseBody = extractBody(response)
-                assert(responseBody == "Title missing.")
+                assert(responseBody == CannotBeEmpty("title").message)
             }
         }
     }

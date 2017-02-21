@@ -60,7 +60,7 @@ class AppService(repository: Repository) {
             case Success(existingDeckIds) => {
                 for {
                     uuid <- UuidParser(id).right
-                    event <- ChangeEvent(uuid, request.title, existingDeckIds.map(UUID.fromString)).right
+                    event <- Event(uuid, request.title, existingDeckIds.map(UUID.fromString)).right
                     response <- exec(event).right
                 } yield response
             }
@@ -68,10 +68,10 @@ class AppService(repository: Repository) {
     }
 }
 
-object ChangeEvent {
+object Event {
     def apply(deckId: UUID, newTitle: String, existingDeckIds: Seq[UUID]): Either[ErrorMessage, Event] = {
         if (existingDeckIds.contains(deckId))
-            Event(deckId, newTitle)
+            deck.editor.Event(deckId, newTitle)
         else
             Left(CouldNotFindEntityWithId("Deck", deckId.toString))
     }

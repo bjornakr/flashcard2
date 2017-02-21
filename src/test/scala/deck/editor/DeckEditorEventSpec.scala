@@ -1,13 +1,12 @@
-package deck.editor.creator
+package deck.editor
 
 import java.time.ZonedDateTime
 import java.util.UUID
 
 import common.CannotBeEmpty
-import deck.editor.Event
 import org.scalatest.WordSpec
 
-class EventSpec extends WordSpec {
+class DeckEditorEventSpec extends WordSpec {
     "Event" when {
         val id = UUID.randomUUID()
         "empty title" should {
