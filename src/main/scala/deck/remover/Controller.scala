@@ -18,6 +18,8 @@ import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success}
 
+// TODO: Prevent removing twice
+
 class Controller(appService: RemoverService) {
     val httpService = HttpService {
         case POST -> Root / id => {
@@ -71,7 +73,7 @@ case class Result(deckId: String)
 
 // DOMAIN
 
-private abstract case class Event(deckId: UUID)
+abstract case class Event(deckId: UUID)
 
 private object Event {
     def apply(deckId: UUID, createdDeckIds: Seq[UUID]): Either[ErrorMessage, Event] = {
