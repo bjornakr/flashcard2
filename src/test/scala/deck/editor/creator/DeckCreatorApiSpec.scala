@@ -18,7 +18,12 @@ class DeckCreatorApiSpec extends ApiBaseSpec {
 
     s"POST $deckUri" when {
         "database error" should {
-            // TODO: Log errors
+
+            "log errors" ignore {
+                // TODO: Log errors
+            }
+
+
 
             "give 500 Internal Server Error w/ error message" in {
                 clearDatabase()

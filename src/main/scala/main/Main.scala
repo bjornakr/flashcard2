@@ -6,7 +6,8 @@ import org.http4s.server.blaze._
 class Main(
               deckCreator: deck.editor.creator.Controller,
               deckChanger: deck.editor.changer.Controller,
-              deckRemover: deck.remover.Controller
+              deckRemover: deck.remover.Controller,
+              deckViewer: deck.viewer.Controller
 
           ) {
 
@@ -17,6 +18,7 @@ class Main(
             .mountService(deckCreator.httpService, "/api/deck/creator")
             .mountService(deckChanger.httpService, "/api/deck/changer")
             .mountService(deckRemover.httpService, "/api/deck/remover")
+            .mountService(deckViewer.httpService, "/api/deck/viewer")
         builder.run
     }
 

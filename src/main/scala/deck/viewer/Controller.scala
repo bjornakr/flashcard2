@@ -1,12 +1,9 @@
 package deck.viewer
 
 import java.sql.Timestamp
-import java.time.ZonedDateTime
-import java.util.UUID
 
-import common.{UuidParser, _}
-import deck.BaseRepository
-import deck.editor.{DeckChangedRow, DeckChangedRowMapper, DeckChangedTable, Event}
+import common._
+import deck.editor._
 import deck.remover.DeckDeletedTable
 import io.circe.generic.auto._
 import io.circe.syntax._
@@ -15,10 +12,9 @@ import org.http4s.dsl.{Root, _}
 import slick.dbio.DBIOAction
 import slick.dbio.Effect.Read
 import slick.driver.H2Driver.api._
-import slick.lifted.{ProvenShape, QueryBase, TableQuery, Tag}
-import slick.profile.FixedSqlAction
+import slick.lifted.{QueryBase, TableQuery}
 
-import scala.concurrent.ExecutionContext.global
+import scala.concurrent.duration.DurationInt
 import scala.concurrent.{Await, Future}
 import scala.util.{Failure, Success}
 
@@ -33,18 +29,24 @@ class Controller(appService: AppService) {
     }
 }
 
-case class Result(deckId: String, title: String, noOfCards: Int)
+case class Result(deckId: String, title: String)
 object ResultMapper {
     def apply(changeEvent: deck.editor.Event): Result = {
-        Result(changeEvent.deckId.toString, changeEvent.title, 0)
+        Result(changeEvent.deckId.toString, changeEvent.title)
     }
 }
 
 class AppService(repository: Repository) {
     def getAll: Either[ErrorMessage, Seq[Result]] = {
-
+        val future = repository.getAll
+        Await.ready(future, DurationInt(3).seconds).value.get match {
+            case Failure(e) => {
+                // TODO: Log error
+                Left(DatabaseError) // or database error - but do not send error message to api?
+            }
+            case Success(events) => Right(events.map(ResultMapper(_)))
+        }
     }
-
 }
 
 // DOMAIN
@@ -59,7 +61,6 @@ class AppService(repository: Repository) {
 //}
 
 class Repository(db: Database) {
-    import scala.concurrent.ExecutionContext.global
 
     //    http://stackoverflow.com/questions/12341579/select-rows-based-on-max-values-of-a-column-in-scalaquery-slick
     private val deckChangedTable = TableQuery[DeckChangedTable]
