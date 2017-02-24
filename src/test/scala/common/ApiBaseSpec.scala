@@ -64,30 +64,11 @@ abstract class ApiBaseSpec extends WordSpec with BeforeAndAfter with BeforeAndAf
 
         val future = db.run(dropTablesAction)
         Await.ready(future, Duration.Inf)
-        //        val decks = TableQuery[DeckTable]
-        //        val cards = TableQuery[CardTable]
-        //        val schema = decks.schema ++ cards.schema
-        //
-        //        val dropCardsAction = slick.dbio.DBIO.seq(schema.drop)
-        //        val dropCardsFuture = db.run(dropCardsAction)
-        //        Await.ready(dropCardsFuture, Duration.Inf) //.value.get
     }
 
     protected def constructDatabase(): Unit = {
         val future = db.run(createTablesAction)
         Await.ready(future, Duration.Inf)
-        //        val decks = TableQuery[DeckTable]
-        //        val cards = TableQuery[CardTable]
-        //        val schema = decks.schema ++ cards.schema
-        //
-        //        val setup = slick.dbio.DBIO.seq(schema.create)
-        //        val dbSetupFuture = db.run(setup)
-        //        Await.ready(dbSetupFuture, Duration.Inf).value.get
-        //
-        //        val createDecks = deckDao.saveAll(allDecks)
-        //        Await.result(createDecks, Duration.Inf)
-        //        val createCards = cardDao.saveAll(allCards)
-        //        Await.result(createCards, Duration.Inf)
     }
 
 
