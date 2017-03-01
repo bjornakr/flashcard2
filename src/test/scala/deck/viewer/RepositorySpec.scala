@@ -45,6 +45,7 @@ class RepositorySpec extends WordSpec with BeforeAndAfter with BeforeAndAfterAll
 
     def execute[A](f: Future[A]): A = {
         Await.ready(f, Duration.Inf).value.get match {
+            case Failure(e) => throw e
             case Success(a) => a
         }
     }
@@ -59,8 +60,12 @@ class RepositorySpec extends WordSpec with BeforeAndAfter with BeforeAndAfterAll
     }
 
     def insertChangeEvent(title: String): UUID = {
-        val t = new Timestamp(System.currentTimeMillis())
         val id = UUID.randomUUID
+        insertChangeEvent(id, title)
+    }
+
+    def insertChangeEvent(id: UUID, title: String): UUID = {
+        val t = new Timestamp(System.currentTimeMillis())
         val query = deckChangedTable += DeckChangedRow(0, t, id.toString, title)
         execute(db.run(query))
         id
@@ -141,6 +146,17 @@ class RepositorySpec extends WordSpec with BeforeAndAfter with BeforeAndAfterAll
                 val results = execute(repository.getAll)
                 assert(results.length == 1)
                 assert(results(0).title == "d1")
+            }
+        }
+
+        "c: [d1a, d1b, d1c]" should {
+            "give [d1c]" in {
+                val d1id = insertChangeEvent("d1a")
+                insertChangeEvent(d1id, "d1b")
+                insertChangeEvent(d1id, "d1c")
+                val results = execute(repository.getAll)
+                assert(results.length == 1)
+                assert(results(0).title == "d1c")
             }
         }
     }
