@@ -22,7 +22,8 @@ abstract class ApiBaseSpec extends WordSpec with BeforeAndAfter with BeforeAndAf
         new deck.editor.creator.Controller(new deck.editor.creator.AppService(new deck.editor.Repository(db))),
         new deck.editor.changer.Controller(new deck.editor.changer.AppService(new deck.editor.Repository(db))),
         new deck.remover.Controller(new deck.remover.RemoverService(new deck.remover.Repository(db))),
-        new deck.viewer.Controller(new deck.viewer.AppService(new deck.viewer.Repository(db)))
+        new deck.viewer.Controller(new deck.viewer.AppService(new deck.viewer.Repository(db))),
+        new card.editor.creator.Controller(new card.editor.creator.AppService(new card.editor.creator.Repository(db)))
     )
     private val testPort = 8070
     private var server: Server = _ // = main.createServer(8070)
@@ -49,15 +50,18 @@ abstract class ApiBaseSpec extends WordSpec with BeforeAndAfter with BeforeAndAf
 
     protected val deckChangedTable: TableQuery[DeckChangedTable] = TableQuery[DeckChangedTable]
     protected val deckDeletedTable: TableQuery[DeckDeletedTable] = TableQuery[DeckDeletedTable]
+    private val cardChangedTable = TableQuery[card.editor.creator.ChangedTable]
 
     private val dropTablesAction = slick.dbio.DBIO.seq(
         deckChangedTable.schema.drop,
-        deckDeletedTable.schema.drop
+        deckDeletedTable.schema.drop,
+        cardChangedTable.schema.drop
     )
 
     private val createTablesAction = slick.dbio.DBIO.seq(
         deckChangedTable.schema.create,
-        deckDeletedTable.schema.create
+        deckDeletedTable.schema.create,
+        cardChangedTable.schema.create
     )
 
     protected def clearDatabase(): Unit = {
