@@ -1,4 +1,4 @@
-package common
+package deck
 
 import deck.editor.DeckChangedTable
 import deck.remover.DeckDeletedTable

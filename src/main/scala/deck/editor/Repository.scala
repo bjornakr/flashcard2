@@ -1,7 +1,6 @@
 package deck.editor
 
-import common.DeckExistsQuery
-import deck.BaseRepository
+import deck.{BaseRepository, DeckExistsQuery}
 import slick.driver.H2Driver.api._
 import slick.lifted.TableQuery
 
