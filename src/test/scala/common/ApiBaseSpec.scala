@@ -40,8 +40,8 @@ abstract class ApiBaseSpec extends WordSpec with BeforeAndAfter with BeforeAndAf
         client.toHttpService.run(request).run
     }
 
-    protected def toBody(body: String): EntityBody = {
-        val byteV: ByteVector = ByteVector.encodeUtf8(body).right.getOrElse(ByteVector(0))
+    protected def toBody(jsonBody: String): EntityBody = {
+        val byteV: ByteVector = ByteVector.encodeUtf8(jsonBody).right.getOrElse(ByteVector(0))
         scalaz.stream.Process.emit(byteV)
     }
 

@@ -50,30 +50,35 @@ class AppService(repository: Repository) {
             }
         }
 
-        val future = repository.existingDeckIds
-        Await.ready(future, DurationInt(3).seconds).value.get match {
-
-            case Failure(e) => {
-                // TODO: Log error
-                Left(DatabaseError)
-            }
-            case Success(existingDeckIds) => {
-                for {
-                    uuid <- UuidParser(id).right
-                    event <- Event(uuid, request.title, existingDeckIds.map(UUID.fromString)).right
-                    response <- exec(event).right
-                } yield response
+        UuidParser(id) match {
+            case Left(e) => Left(e)
+            case Right(uuid) => {
+                val future = repository.deckExists(uuid.toString)
+                Await.ready(future, DurationInt(3).seconds).value.get match {
+                    case Failure(e) => {
+                        // TODO: Log error
+                        Left(DatabaseError)
+                    }
+                    case Success(deckExists) => {
+                        for {
+                            event <- Event(uuid, request.title, deckExists).right
+                            response <- exec(event).right
+                        } yield response
+                    }
+                }
             }
         }
+
+
     }
 }
 
 object Event {
-    def apply(deckId: UUID, newTitle: String, existingDeckIds: Seq[UUID]): Either[ErrorMessage, Event] = {
-        if (existingDeckIds.contains(deckId))
-            deck.editor.Event(deckId, newTitle)
-        else
-            Left(CouldNotFindEntityWithId("Deck", deckId.toString))
+    def apply(deckId: UUID, newTitle: String, deckExists: Boolean): Either[ErrorMessage, Event] = {
+            if (deckExists)
+                deck.editor.Event(deckId, newTitle)
+            else
+                Left(CouldNotFindEntityWithId("Deck", deckId.toString))
     }
 }
 

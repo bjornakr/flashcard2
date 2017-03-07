@@ -16,7 +16,7 @@ class DeckChangerEventSpec extends WordSpec {
 
         "deck exists" should {
             "create Event" in {
-                val result = deck.editor.changer.Event(createdDecks.head, "New title", createdDecks)
+                val result = deck.editor.changer.Event(createdDecks.head, "New title", deckExists = true)
                 result match {
                     case Left(_) => assert(false)
                     case Right(_) => assert(true)
@@ -24,10 +24,10 @@ class DeckChangerEventSpec extends WordSpec {
             }
         }
 
-        "deck has not been created" should {
+        "deck does not exist" should {
             "give Error" in {
                 val id = UUID.randomUUID()
-                val result = Event(id, "New title", createdDecks)
+                val result = Event(id, "New title", deckExists = false)
                 assert(result == Left(CouldNotFindEntityWithId("Deck", id.toString)))
             }
         }

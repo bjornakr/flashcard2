@@ -4,6 +4,7 @@ import java.sql.Timestamp
 
 import common._
 import deck.editor.{DeckChangedRow, EventResponse, RequestDto}
+import deck.remover.DeckDeletedRow
 import org.http4s.{Method, Status}
 import io.circe.Decoder._
 import io.circe.generic.auto._
@@ -13,10 +14,14 @@ import slick.driver.H2Driver.api._
 
 class DeckChangerApiSpec extends ApiBaseSpec {
     private val existingDeckId = "00000000-0000-0000-0000-000000000001"
-
+    private val deletedDeckId = "00000000-0000-0000-0000-000000000002"
     override protected def fillDatabase(): Unit = {
         val deckCreatedEvent = DeckChangedRow(0, new Timestamp(System.currentTimeMillis()), existingDeckId, "Test Deck")
-        val action = slick.dbio.DBIO.seq(deckChangedTable += deckCreatedEvent)
+        val action = slick.dbio.DBIO.seq(
+            deckChangedTable += DeckChangedRow(0, new Timestamp(System.currentTimeMillis()), existingDeckId, "Test Deck"),
+            deckChangedTable += DeckChangedRow(0, new Timestamp(System.currentTimeMillis()), deletedDeckId, "Deleted deck"),
+            deckDeletedTable += DeckDeletedRow(0, new Timestamp(System.currentTimeMillis()), deletedDeckId)
+        )
         db.run(action)
     }
 
@@ -122,6 +127,18 @@ class DeckChangerApiSpec extends ApiBaseSpec {
 
                 val responseBody = extractBody(response)
                 assert(responseBody == CannotBeEmpty("title").message)
+            }
+        }
+
+        "deck has been deleted" should {
+            "give 404 Not Found w/ error message" in {
+                val uri = changerUri / deletedDeckId
+                val requestBody = toBody(RequestDto("New title").asJson.noSpaces)
+                val response = executeRequest(Method.POST, uri, requestBody)
+                //assert(response.status == Status.NotFound)
+
+                val responseBody = extractBody(response)
+                assert(responseBody == CouldNotFindEntityWithId("Deck", deletedDeckId).message)
             }
         }
     }
