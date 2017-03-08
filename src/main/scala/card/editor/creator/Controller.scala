@@ -6,6 +6,7 @@ import java.util.UUID
 
 import cats.data.Xor
 import common._
+import deck.DeckExistsQuery
 import io.circe.generic.auto._
 import io.circe.parser.decode
 import io.circe.syntax._
@@ -14,9 +15,7 @@ import org.http4s.{EntityDecoder, HttpService}
 import slick.driver.H2Driver.api._
 import slick.lifted.{ProvenShape, TableQuery, Tag}
 
-import scala.concurrent.duration.DurationInt
-import scala.concurrent.{Await, Future}
-import scala.util.{Failure, Success}
+import scala.concurrent.Future
 
 
 class Controller(appService: AppService) {
@@ -40,45 +39,40 @@ class Controller(appService: AppService) {
 
 // APPLICATION
 
-trait CardSideDto {
+private trait CardSideDto {
     def term: String
     def description: Option[String]
 }
 
-trait CardDto {
+private trait CardDto {
     def front: CardSideDto
     def back: CardSideDto
 }
 
-case class FrontDto(term: String, description: Option[String]) extends CardSideDto
-case class BackDto(term: String, description: Option[String]) extends CardSideDto
-case class CreateCardRequestDto(front: FrontDto, back: BackDto) extends CardDto
-case class CreateCardResponseDto(cardId: String, deckId: String, front: FrontDto, back: BackDto) extends CardDto
+private case class FrontDto(term: String, description: Option[String]) extends CardSideDto
+private case class BackDto(term: String, description: Option[String]) extends CardSideDto
+private case class CreateCardRequestDto(front: FrontDto, back: BackDto) extends CardDto
+private case class CreateCardResponseDto(cardId: String, deckId: String, front: FrontDto, back: BackDto) extends CardDto
 
 
 class AppService(repository: Repository) {
     private[creator] def save(deckId: String, request: CreateCardRequestDto): Either[ErrorMessage, CreateCardResponseDto] = {
 
         def save(changedEvent: Event): Either[ErrorMessage, CreateCardResponseDto] = {
-            val future = repository.save(changedEvent)
-            Await.ready(future, DurationInt(3).seconds).value.get match {
-                case Failure(e) => {
-                    // TODO: Log error
-                    Left(DatabaseError) // or database error - but do not send error message to api?
-                }
-                case Success(event) => Right(EventResponseMapper(event))
-            }
+            val saveAction = repository.save(changedEvent)
+            FutureAwaiter(saveAction)(event => Right(EventResponseMapper(event)))
         }
 
-        RequestToDomainMapper(request, deckId) match {
-            case Left(err) => Left(err)
-            case Right(ce) => save(ce)
-        }
+        FutureAwaiter(repository.deckExists(deckId))(deckExists =>
+            RequestToDomainMapper(request, deckId, deckExists) match {
+                case Left(err) => Left(err)
+                case Right(ce) => save(ce)
+            })
     }
 }
 
-object RequestToDomainMapper {
-    def apply(request: CreateCardRequestDto, deckId: String): Either[ErrorMessage, Event] = {
+private object RequestToDomainMapper {
+    def apply(request: CreateCardRequestDto, deckId: String, deckExists: Boolean): Either[ErrorMessage, Event] = {
         def emptyToNone(s: String) = if (s.trim == "") None else s
 
         request.front.description.map(emptyToNone)
@@ -90,12 +84,13 @@ object RequestToDomainMapper {
             dId <- UuidParser(deckId).right
             f <- front.right
             b <- back.right
-        } yield Event(dId, f, b)
+            e <- Event(dId, f, b, deckExists).right
+        } yield e
     }
 }
 
 
-object EventResponseMapper {
+private object EventResponseMapper {
     def apply(event: Event): CreateCardResponseDto = {
         val front = FrontDto(event.front.term, event.front.description)
         val back = BackDto(event.back.term, event.back.description)
@@ -128,14 +123,17 @@ object CardSide {
 }
 
 object Event {
-    def apply(deckId: UUID, front: CardSide, back: CardSide): Event =
-        new Event(ZonedDateTime.now, UUID.randomUUID(), deckId, front, back) {}
+    def apply(deckId: UUID, front: CardSide, back: CardSide, deckExists: Boolean): Either[ErrorMessage, Event] =
+        if (deckExists)
+            Right(new Event(ZonedDateTime.now, UUID.randomUUID(), deckId, front, back) {})
+        else
+            Left(CouldNotFindEntityWithId("Deck", deckId.toString))
 }
 
 
 // REPOSITORY
 
-class Repository(db: Database) {
+class Repository(db: Database) extends DeckExistsQuery {
 
     private val changedTable = TableQuery[ChangedTable]
     private val insertQuery = changedTable returning changedTable.map(_.id) into ((dto, id) => ChangedRowToDomain(dto.copy(id = id)))
@@ -145,9 +143,7 @@ class Repository(db: Database) {
         db.run(action)
     }
 
-    def deckExists(deckId: String) = {
-
-    }
+    def deckExists(deckId: String): Future[Boolean] = deckExists(db, deckId)
 }
 
 object ChangedRowToDomain {
