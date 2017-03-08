@@ -42,23 +42,17 @@ class Controller(appService: AppService) {
 
 trait CardSideDto {
     def term: String
-
     def description: Option[String]
 }
 
 trait CardDto {
     def front: CardSideDto
-
     def back: CardSideDto
 }
 
-//case class CardSideDto(term: String, description: Option[String])
 case class FrontDto(term: String, description: Option[String]) extends CardSideDto
-
 case class BackDto(term: String, description: Option[String]) extends CardSideDto
-
 case class CreateCardRequestDto(front: FrontDto, back: BackDto) extends CardDto
-
 case class CreateCardResponseDto(cardId: String, deckId: String, front: FrontDto, back: BackDto) extends CardDto
 
 

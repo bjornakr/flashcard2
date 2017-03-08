@@ -15,7 +15,7 @@ class DeckRemoverEventSpec extends WordSpec {
         )
         "deck exists" should {
             "create Event" in {
-                val result = Event(createdDecks.head, createdDecks)
+                val result = Event(createdDecks.head, deckExists = true)
                 assert(result == Right(new Event(createdDecks.head) {}))
             }
         }
@@ -23,7 +23,7 @@ class DeckRemoverEventSpec extends WordSpec {
         "deck has not been created" should {
             "give Error" in {
                 val id = UUID.randomUUID()
-                val result = Event(id, createdDecks)
+                val result = Event(id, deckExists = false)
                 assert(result == Left(CouldNotFindEntityWithId("Deck", id.toString)))
             }
         }

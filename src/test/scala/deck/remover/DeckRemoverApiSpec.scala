@@ -1,6 +1,7 @@
 package deck.remover
 
 import java.sql.Timestamp
+import java.util.UUID
 
 import common.{ApiBaseSpec, CouldNotFindEntityWithId, InvalidUuidFormat}
 import deck.editor.DeckChangedRow
@@ -14,10 +15,16 @@ class DeckRemoverApiSpec extends ApiBaseSpec {
     private val removerUri = baseUri / "deck" / "remover"
 
     private val existingDeckId = "00000000-0000-0000-0000-000000000001"
+    private val deletedDeckId = UUID.randomUUID().toString
 
     override def fillDatabase(): Unit = {
-        val deckCreatedEvent = DeckChangedRow(0, new Timestamp(System.currentTimeMillis()), existingDeckId, "Test Deck")
-        val action = slick.dbio.DBIO.seq(deckChangedTable += deckCreatedEvent)
+        def createTimestamp() = new Timestamp(System.currentTimeMillis())
+
+        val action = slick.dbio.DBIO.seq(
+            deckChangedTable += DeckChangedRow(0, createTimestamp(), existingDeckId, "Test Deck"),
+            deckChangedTable += DeckChangedRow(0, createTimestamp(), deletedDeckId, "Deleted Deck"),
+            deckDeletedTable += DeckDeletedRow(0, createTimestamp(), deletedDeckId)
+        )
         db.run(action)
     }
 
@@ -55,7 +62,7 @@ class DeckRemoverApiSpec extends ApiBaseSpec {
             }
         }
 
-        "no deck with id" should {
+        "no Deck with id" should {
             "give 404 Not Found w/ error message" in {
                 val id = "00000000-0000-0000-0000-999999999999"
                 val uri = removerUri / id
@@ -64,6 +71,17 @@ class DeckRemoverApiSpec extends ApiBaseSpec {
 
                 val responseBody = extractBody(response)
                 assert(responseBody == CouldNotFindEntityWithId("Deck", id).message)
+            }
+        }
+
+        "Deck already has been deleted" should {
+            "give 404 Not Found w/ error message" in {
+                val uri = removerUri / deletedDeckId
+                val response = executeRequest(Method.POST, uri)
+                assert(response.status == Status.NotFound)
+
+                val responseBody = extractBody(response)
+                assert(responseBody == CouldNotFindEntityWithId("Deck", deletedDeckId).message)
             }
         }
     }

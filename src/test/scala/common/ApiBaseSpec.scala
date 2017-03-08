@@ -21,7 +21,7 @@ abstract class ApiBaseSpec extends WordSpec with BeforeAndAfter with BeforeAndAf
     private val main = new Main(
         new deck.editor.creator.Controller(new deck.editor.creator.AppService(new deck.editor.Repository(db))),
         new deck.editor.changer.Controller(new deck.editor.changer.AppService(new deck.editor.Repository(db))),
-        new deck.remover.Controller(new deck.remover.RemoverService(new deck.remover.Repository(db))),
+        new deck.remover.Controller(new deck.remover.AppService(new deck.remover.Repository(db))),
         new deck.viewer.Controller(new deck.viewer.AppService(new deck.viewer.Repository(db))),
         new card.editor.creator.Controller(new card.editor.creator.AppService(new card.editor.creator.Repository(db)))
     )

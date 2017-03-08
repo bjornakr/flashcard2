@@ -5,8 +5,7 @@ import java.time.ZonedDateTime
 import java.util.UUID
 
 import common.{UuidParser, _}
-import deck.BaseRepository
-import deck.editor.DeckChangedTable
+import deck.DeckExistsQuery
 import io.circe.generic.auto._
 import io.circe.syntax._
 import org.http4s.HttpService
@@ -20,7 +19,7 @@ import scala.util.{Failure, Success}
 
 // TODO: Prevent removing twice
 
-class Controller(appService: RemoverService) {
+class Controller(appService: AppService) {
     val httpService = HttpService {
         case POST -> Root / id => {
             appService.saveEvent(id) match {
@@ -33,7 +32,7 @@ class Controller(appService: RemoverService) {
 
 // Application
 
-class RemoverService(repository: Repository) {
+class AppService(repository: Repository) {
     def saveEvent(id: String): Either[ErrorMessage, Result] = {
 
         def exec(event: Event): Either[ErrorMessage, Result] = {
@@ -47,24 +46,20 @@ class RemoverService(repository: Repository) {
             }
         }
 
-        val future = repository.existingDeckIds
-
+        val future = repository.deckExists(id)
         Await.ready(future, DurationInt(3).seconds).value.get match {
-
             case Failure(e) => {
                 // Log error
                 Left(DatabaseError)
             }
-            case Success(createdDeckIds) => {
+            case Success(deckExists) => {
                 for {
                     uuid <- UuidParser(id).right
-                    event <- Event(uuid, createdDeckIds.map(UUID.fromString)).right
+                    event <- Event(uuid, deckExists).right
                     r <- exec(event).right
                 } yield r
             }
         }
-
-
     }
 }
 
@@ -76,8 +71,8 @@ case class Result(deckId: String)
 abstract case class Event(deckId: UUID)
 
 private object Event {
-    def apply(deckId: UUID, createdDeckIds: Seq[UUID]): Either[ErrorMessage, Event] = {
-        if (createdDeckIds.contains(deckId))
+    def apply(deckId: UUID, deckExists: Boolean): Either[ErrorMessage, Event] = {
+        if (deckExists)
             Right(new Event(deckId) {})
         else {
             Left(CouldNotFindEntityWithId("Deck", deckId.toString))
@@ -100,16 +95,9 @@ class DeckDeletedTable(tag: Tag) extends Table[DeckDeletedRow](tag, "deck_delete
     def * : ProvenShape[DeckDeletedRow] = (id, t, deckId) <> (DeckDeletedRow.tupled, DeckDeletedRow.unapply)
 }
 
-class Repository(db: Database) extends BaseRepository(db) {
-
-//    def createdDeckIds: Future[Seq[String]] = {
-//        val query = TableQuery[DeckChangedTable]
-//            .groupBy(r => r.deckId)
-//            .map { case (id, g) => id }
-//
-//        //        val query = TableQuery[DeckChangedTable].filter(_.deckId === deckId)
-//        db.run(query.result)
-//    }
+class Repository(db: Database) extends DeckExistsQuery {
+    def deckExists(deckId: String): Future[Boolean] =
+        deckExists(db, deckId)
 
     def save(event: Event): Future[Result] = {
         val deckDeletedTable = TableQuery[DeckDeletedTable]
