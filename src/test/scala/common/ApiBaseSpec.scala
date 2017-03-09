@@ -1,5 +1,7 @@
 package common
 
+import java.sql.Timestamp
+
 import deck.editor.{DeckChangedTable, Repository}
 import deck.remover.DeckDeletedTable
 import main.Main
@@ -47,6 +49,9 @@ abstract class ApiBaseSpec extends WordSpec with BeforeAndAfter with BeforeAndAf
 
     protected def extractBody(r: Response): String =
         EntityDecoder.decodeString(r).run
+
+    protected def createTimestamp() = new Timestamp(System.currentTimeMillis())
+
 
     protected val deckChangedTable: TableQuery[DeckChangedTable] = TableQuery[DeckChangedTable]
     protected val deckDeletedTable: TableQuery[DeckDeletedTable] = TableQuery[DeckDeletedTable]

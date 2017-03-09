@@ -1,5 +1,6 @@
 package card.editor.creator
 
+import java.io.Serializable
 import java.sql.Timestamp
 import java.time.{ZoneId, ZonedDateTime}
 import java.util.UUID
@@ -25,7 +26,7 @@ class Controller(appService: AppService) {
             val request = decode[CreateCardRequestDto](requestJson)
 
             request match {
-                case Xor.Left(_) => BadRequest(s"Could not parse body into ${CreateCardRequestDto.getClass.getCanonicalName}.")
+                case Xor.Left(_) => BadRequest(CouldNotParse("body", CreateCardRequestDto).message)
                 case Xor.Right(a) => {
                     appService.save(deckId, a) match {
                         case Left(err) => common.ErrorToHttpStatus(err)
@@ -73,10 +74,6 @@ class AppService(repository: Repository) {
 
 private object RequestToDomainMapper {
     def apply(request: CreateCardRequestDto, deckId: String, deckExists: Boolean): Either[ErrorMessage, Event] = {
-        def emptyToNone(s: String) = if (s.trim == "") None else s
-
-        request.front.description.map(emptyToNone)
-        request.back.description.map(emptyToNone)
         val front = CardSide.front(request.front.term, request.front.description)
         val back = CardSide.back(request.back.term, request.back.description)
 
@@ -106,19 +103,21 @@ abstract case class Event(t: ZonedDateTime, cardId: UUID, deckId: UUID, front: C
 
 object CardSide {
     private def proc(term: String, description: Option[String], errorMessage: String): Either[ErrorMessage, CardSide] = {
+        def emptyToNone(s: String) = if (s.trim == "") None else Some(s)
+        val nonEmptyDescription: Option[String] = description.flatMap(emptyToNone)
+
         term.trim match {
-            case "" => Left(CannotBeEmpty("FrontSide::term"))
-            case t => Right(new CardSide(t, description) {})
+            case "" => Left(CannotBeEmpty(errorMessage))
+            case t => Right(new CardSide(t, nonEmptyDescription) {})
         }
     }
 
-
     def front(term: String, description: Option[String]): Either[ErrorMessage, CardSide] =
-        proc(term, description, "FrontSide::term")
+        proc(term, description, "Front: Term")
 
 
     def back(term: String, description: Option[String]): Either[ErrorMessage, CardSide] =
-        proc(term, description, "BackSide::term")
+        proc(term, description, "Back: Term")
 
 }
 

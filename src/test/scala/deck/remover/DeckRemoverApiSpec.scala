@@ -1,6 +1,5 @@
 package deck.remover
 
-import java.sql.Timestamp
 import java.util.UUID
 
 import common.{ApiBaseSpec, CouldNotFindEntityWithId, InvalidUuidFormat}
@@ -18,8 +17,6 @@ class DeckRemoverApiSpec extends ApiBaseSpec {
     private val deletedDeckId = UUID.randomUUID().toString
 
     override def fillDatabase(): Unit = {
-        def createTimestamp() = new Timestamp(System.currentTimeMillis())
-
         val action = slick.dbio.DBIO.seq(
             deckChangedTable += DeckChangedRow(0, createTimestamp(), existingDeckId, "Test Deck"),
             deckChangedTable += DeckChangedRow(0, createTimestamp(), deletedDeckId, "Deleted Deck"),
