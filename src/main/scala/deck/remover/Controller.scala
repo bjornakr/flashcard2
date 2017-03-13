@@ -68,9 +68,9 @@ case class Result(deckId: String)
 
 // DOMAIN
 
-abstract case class Event(deckId: UUID)
+private[remover] abstract case class Event(deckId: UUID)
 
-private object Event {
+private[remover] object Event {
     def apply(deckId: UUID, deckExists: Boolean): Either[ErrorMessage, Event] = {
         if (deckExists)
             Right(new Event(deckId) {})

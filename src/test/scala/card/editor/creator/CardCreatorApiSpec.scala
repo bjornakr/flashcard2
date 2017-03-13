@@ -2,6 +2,7 @@ package card.editor.creator
 
 import java.util.UUID
 
+import card.editor.{BackDto, FrontDto, RequestDto, ResponseDto}
 import common.{ApiBaseSpec, CannotBeEmpty, CouldNotFindEntityWithId, CouldNotParse}
 import deck.editor.DeckChangedRow
 import deck.remover.DeckDeletedRow
@@ -27,7 +28,7 @@ class CardCreatorApiSpec extends ApiBaseSpec {
 
     private val front = FrontDto("Front", None)
     private val back = BackDto("Back", Some("Description B"))
-    private val validCard = CreateCardRequestDto(front, back)
+    private val validCard = RequestDto(front, back)
 
     s"POST $baseUri/deck/:deckId/card/:cardId" when {
         "valid request" should {
@@ -39,8 +40,8 @@ class CardCreatorApiSpec extends ApiBaseSpec {
 
                 val responseBody = extractBody(response)
                 Console.println(responseBody)
-                val responseDto = decode[CreateCardResponseDto](responseBody).valueOr(e => throw e)
-                val expectedResponseDto = CreateCardResponseDto(responseDto.cardId, existingDeckId.toString, front, back)
+                val responseDto = decode[ResponseDto](responseBody).valueOr(e => throw e)
+                val expectedResponseDto = ResponseDto(responseDto.cardId, existingDeckId.toString, front, back)
                 assert(responseDto == expectedResponseDto)
             }
         }
@@ -78,7 +79,7 @@ class CardCreatorApiSpec extends ApiBaseSpec {
                 assert(response.status == Status.BadRequest)
 
                 val responseBody = extractBody(response)
-                assert(responseBody == CouldNotParse("body", CreateCardRequestDto).message)
+                assert(responseBody == CouldNotParse("body", RequestDto).message)
             }
         }
 
@@ -86,7 +87,7 @@ class CardCreatorApiSpec extends ApiBaseSpec {
             "give 400 Bad Request w/ error message" in {
                 val uri = baseUri / "deck" / existingDeckId / "card"
 
-                val dto = CreateCardRequestDto(FrontDto("   ", None), BackDto("Back", None))
+                val dto = RequestDto(FrontDto("   ", None), BackDto("Back", None))
                 val body = toBody(dto.asJson.noSpaces)
                 val response = executeRequest(Method.POST, uri, body)
                 assert(response.status == Status.BadRequest)
@@ -100,7 +101,7 @@ class CardCreatorApiSpec extends ApiBaseSpec {
             "give 400 Bad Request w/ error message" in {
                 val uri = baseUri / "deck" / existingDeckId / "card"
 
-                val dto = CreateCardRequestDto(FrontDto("Front", None), BackDto("   ", None))
+                val dto = RequestDto(FrontDto("Front", None), BackDto("   ", None))
                 val body = toBody(dto.asJson.noSpaces)
                 val response = executeRequest(Method.POST, uri, body)
                 assert(response.status == Status.BadRequest)

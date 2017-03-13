@@ -10,10 +10,10 @@ class Repository(db: Database) extends DeckExistsQuery {
     private val deckChangedTable = TableQuery[DeckChangedTable]
     private val insertQuery = deckChangedTable returning deckChangedTable.map(_.id) into ((dto, id) => DeckChangedRowMapper.toDomain(dto.copy(id = id)))
 
-    private[deck] def save(event: Event): Future[Event] = {
+    def save(event: Event): Future[Event] = {
         val action = insertQuery += DeckChangedRowMapper.fromDomain(event)
         db.run(action)
     }
 
-    private[deck] def deckExists(deckId: String): Future[Boolean] = deckExists(db, deckId)
+    def deckExists(deckId: String): Future[Boolean] = deckExists(db, deckId)
 }

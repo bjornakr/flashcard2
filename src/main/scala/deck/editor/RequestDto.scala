@@ -1,3 +1,3 @@
 package deck.editor
 
-case class RequestDto(title: String)
+private[deck] case class RequestDto(title: String)

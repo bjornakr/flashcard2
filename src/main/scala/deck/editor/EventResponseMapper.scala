@@ -1,6 +1,6 @@
 package deck.editor
 
-object EventResponseMapper {
+private[deck] object EventResponseMapper {
     def apply(changedEvent: Event) =
         EventResponse(changedEvent.deckId.toString, changedEvent.title)
 }
