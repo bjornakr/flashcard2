@@ -2,9 +2,6 @@ package card.editor
 
 import java.sql.Timestamp
 
-/**
-  * Created by bjornkri on 13.03.2017.
-  */
 object DomainToChangedRow {
     def apply(e: Event): ChangedRow =
         ChangedRow(

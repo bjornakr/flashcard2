@@ -1,23 +1,13 @@
 package card.editor.creator
 
-import java.io.Serializable
-import java.sql.Timestamp
-import java.time.{ZoneId, ZonedDateTime}
-import java.util.UUID
-
 import card.editor._
 import cats.data.Xor
 import common._
-import deck.DeckExistsQuery
 import io.circe.generic.auto._
 import io.circe.parser.decode
 import io.circe.syntax._
 import org.http4s.dsl._
 import org.http4s.{EntityDecoder, HttpService}
-import slick.driver.H2Driver.api._
-import slick.lifted.{ProvenShape, TableQuery, Tag}
-
-import scala.concurrent.Future
 
 
 class Controller(appService: AppService) {
@@ -50,29 +40,16 @@ class AppService(repository: Repository) {
         }
 
         FutureAwaiter(repository.deckExists(deckId))(deckExists =>
-            RequestToDomainMapper(request, deckId, deckExists) match {
-                case Left(err) => Left(err)
-                case Right(ce) => save(ce)
-            })
+            if (deckExists)
+                RequestToDomainMapper(request, deckId) match {
+                    case Left(err) => Left(err)
+                    case Right(ce) => save(ce)
+                }
+            else
+                Left(CouldNotFindEntityWithId("Deck", deckId))
+        )
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// REPOSITORY
 
 
 

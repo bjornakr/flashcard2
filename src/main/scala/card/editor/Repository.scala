@@ -17,4 +17,21 @@ class Repository(db: Database) extends DeckExistsQuery {
     }
 
     def deckExists(deckId: String): Future[Boolean] = deckExists(db, deckId)
+
+    def cardExists(cardId: String): Future[Boolean] = {
+        val created = TableQuery[ChangedTable]
+            .map(a => a.cardId)
+            .distinct
+
+        // Insert when possible
+//        val deleted = TableQuery[DeletedTable]
+//            .map(_.cardId)
+//            .distinct
+
+        val query = created  // .filterNot(_.in(deleted))
+            .filter(_ === cardId)
+            .exists
+
+        db.run(query.result)
+    }
 }
