@@ -59,7 +59,7 @@ class AppService(repository: Repository) {
                             case Right(ce) => save(ce)
                         }
                     case (false, _) => Left(CouldNotFindEntityWithId("Deck", deckId))
-                    case (_, false) => Left(CouldNotFindEntityWithId("Card", deckId))
+                    case (_, false) => Left(CouldNotFindEntityWithId("Card", cardId))
                 }
             }))
     }

@@ -15,14 +15,15 @@ import slick.driver.H2Driver.api._
 
 class CardChangerApiSpec extends ApiBaseSpec {
     private val existingDeckId = UUID.randomUUID().toString
-    private val deletedDeckId = UUID.randomUUID().toString
     private val existingCardId = UUID.randomUUID().toString
+    private val deletedCardId = UUID.randomUUID().toString
+    private val nonExistingId = "99999999-9999-9999-9999-999999999999"
 
     override protected def fillDatabase(): Unit = {
         val action = slick.dbio.DBIO.seq(
             deckChangedTable += DeckChangedRow(0, createTimestamp(), existingDeckId, "Test Deck"),
-            deckChangedTable += DeckChangedRow(0, createTimestamp(), deletedDeckId, "Deleted Deck"),
-            deckDeletedTable += DeckDeletedRow(0, createTimestamp(), deletedDeckId),
+//            deckChangedTable += DeckChangedRow(0, createTimestamp(), deletedDeckId, "Deleted Deck"),
+//            deckDeletedTable += DeckDeletedRow(0, createTimestamp(), deletedDeckId),
             cardChangedTable += card.editor.ChangedRow(0, createTimestamp(), existingCardId, existingDeckId,
                 "Test Card Front", None, "Test Card Back", Some("Back Description"))
         )
@@ -33,10 +34,15 @@ class CardChangerApiSpec extends ApiBaseSpec {
     private val back = BackDto("Back", Some("Description B"))
     private val validCard = RequestDto(front, back)
 
-    s"POST $baseUri/deck/:deckId/card/:cardId/creator" when {
+    s"POST $baseUri/deck/:deckId/card/:cardId/changer" when {
+
+        "database error" ignore {
+            // TODO: Awaiting logger
+        }
+
         "valid request" should {
             "give 201 Created w/ { cardId, deckId, front { term, description }, back { term, description } }" in {
-                val uri = baseUri / "deck" / existingDeckId / "card" / existingCardId
+                val uri = baseUri / "deck" / existingDeckId / "card" / existingCardId / "changer"
                 val body = toBody(validCard.asJson.noSpaces)
                 val response = executeRequest(Method.POST, uri, body)
                 assert(response.status == Status.Created)
@@ -52,8 +58,7 @@ class CardChangerApiSpec extends ApiBaseSpec {
         "Deck does not exist" should {
             "give 404 Not Found w/ error message" in {
                 val body = toBody(validCard.asJson.noSpaces)
-                val nonExistingId = "99999999-9999-9999-9999-999999999999"
-                val uri = baseUri / "deck" / nonExistingId / "card"
+                val uri = baseUri / "deck" / nonExistingId / "card" / existingCardId / "changer"
                 val response = executeRequest(Method.POST, uri, body)
                 assert(response.status == Status.NotFound)
 
@@ -62,21 +67,34 @@ class CardChangerApiSpec extends ApiBaseSpec {
             }
         }
 
-        "Deck has been deleted" should {
+        "Card does not exist" should {
             "give 404 Not Found w/ error message" in {
                 val body = toBody(validCard.asJson.noSpaces)
-                val uri = baseUri / "deck" / deletedDeckId / "card"
+                val uri = baseUri / "deck" / existingDeckId / "card" / nonExistingId / "changer"
                 val response = executeRequest(Method.POST, uri, body)
                 assert(response.status == Status.NotFound)
 
                 val message = extractBody(response)
-                assert(message == CouldNotFindEntityWithId("Deck", deletedDeckId).message)
+                assert(message == CouldNotFindEntityWithId("Card", nonExistingId).message)
+            }
+        }
+
+        "Card has been deleted" should {
+            "give 404 Not Found w/ error message" ignore {
+                // TODO: Introduce when card deleter is onlie.
+                val body = toBody(validCard.asJson.noSpaces)
+                val uri = baseUri / "deck" / existingDeckId / "card"/ deletedCardId / "changer"
+                val response = executeRequest(Method.POST, uri, body)
+                assert(response.status == Status.NotFound)
+
+                val message = extractBody(response)
+                assert(message == CouldNotFindEntityWithId("Deck", deletedCardId).message)
             }
         }
 
         "malformed body" should {
             "give 400 Bad Request w/ error message" in {
-                val uri = baseUri / "deck" / existingDeckId / "card"
+                val uri = baseUri / "deck" / existingDeckId / "card"/ existingCardId / "changer"
                 val body = toBody("!@#$%")
                 val response = executeRequest(Method.POST, uri, body)
                 assert(response.status == Status.BadRequest)
@@ -88,7 +106,7 @@ class CardChangerApiSpec extends ApiBaseSpec {
 
         "Front side Term is empty" should {
             "give 400 Bad Request w/ error message" in {
-                val uri = baseUri / "deck" / existingDeckId / "card"
+                val uri = baseUri / "deck" / existingDeckId / "card"/ existingCardId / "changer"
 
                 val dto = RequestDto(FrontDto("   ", None), BackDto("Back", None))
                 val body = toBody(dto.asJson.noSpaces)
@@ -102,7 +120,7 @@ class CardChangerApiSpec extends ApiBaseSpec {
 
         "Back side Term is empty" should {
             "give 400 Bad Request w/ error message" in {
-                val uri = baseUri / "deck" / existingDeckId / "card"
+                val uri = baseUri / "deck" / existingDeckId / "card"/ existingCardId / "changer"
 
                 val dto = RequestDto(FrontDto("Front", None), BackDto("   ", None))
                 val body = toBody(dto.asJson.noSpaces)
