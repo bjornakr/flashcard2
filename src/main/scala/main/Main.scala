@@ -9,7 +9,7 @@ class Main(
               deckChanger: deck.editor.changer.Controller,
               deckRemover: deck.remover.Controller,
               deckViewer: deck.viewer.Controller,
-              cardCreator: card.editor.creator.Controller
+              cardController: card.Controller
           ) {
 
     def createServer: Server = createServer(8070)
@@ -22,7 +22,7 @@ class Main(
             .mountService(deckChanger.httpService, "/api/deck/changer")
             .mountService(deckRemover.httpService, "/api/deck/remover")
             .mountService(deckViewer.httpService, "/api/deck/viewer")
-            .mountService(cardCreator.httpService, "/api/deck")
+            .mountService(cardController.httpService, "/api/deck")
         builder.run
     }
 

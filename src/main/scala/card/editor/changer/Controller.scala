@@ -4,28 +4,43 @@ import card.editor._
 import cats.data.Xor
 import common.{CouldNotFindEntityWithId, CouldNotParse, ErrorMessage, FutureAwaiter}
 import org.http4s.dsl._
-import org.http4s.{EntityDecoder, HttpService}
+import org.http4s.{EntityDecoder, HttpService, Request}
 import io.circe.generic.auto._
 import io.circe.parser.decode
 import io.circe.syntax._
 
 class Controller(appService: AppService) {
-    val httpService = HttpService {
-        case requestString@POST -> Root / deckId / "card" / cardId => {
-            val requestJson = EntityDecoder.decodeString(requestString).run
-            val request = decode[RequestDto](requestJson)
+    def apply(request: Request, deckId: String, cardId: String) = {
+        val requestJson = EntityDecoder.decodeString(request).run
+        val requestDto = decode[RequestDto](requestJson)
 
-            request match {
-                case Xor.Left(_) => BadRequest(CouldNotParse("body", RequestDto).message)
-                case Xor.Right(a) => {
-                    appService.save(deckId, cardId, a) match {
-                        case Left(err) => common.ErrorToHttpStatus(err)
-                        case Right(b) => Created(b.asJson.noSpaces)
-                    }
+        requestDto match {
+            case Xor.Left(_) => BadRequest(CouldNotParse("body", RequestDto).message)
+            case Xor.Right(a) => {
+                appService.save(deckId, cardId, a) match {
+                    case Left(err) => common.ErrorToHttpStatus(err)
+                    case Right(b) => Created(b.asJson.noSpaces)
                 }
             }
         }
     }
+
+//    val httpService = HttpService {
+//        case requestString@POST -> Root / deckId / "card" / cardId => {
+//            val requestJson = EntityDecoder.decodeString(requestString).run
+//            val request = decode[RequestDto](requestJson)
+//
+//            request match {
+//                case Xor.Left(_) => BadRequest(CouldNotParse("body", RequestDto).message)
+//                case Xor.Right(a) => {
+//                    appService.save(deckId, cardId, a) match {
+//                        case Left(err) => common.ErrorToHttpStatus(err)
+//                        case Right(b) => Created(b.asJson.noSpaces)
+//                    }
+//                }
+//            }
+//        }
+//    }
 }
 
 class AppService(repository: Repository) {
