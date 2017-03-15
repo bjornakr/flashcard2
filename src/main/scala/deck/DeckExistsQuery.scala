@@ -8,7 +8,7 @@ import slick.lifted.TableQuery
 import scala.concurrent.Future
 
 trait DeckExistsQuery {
-    protected def deckExists(db: Database, deckId: String): Future[Boolean] = {
+    def deckExists(db: Database, deckId: String): Future[Boolean] = {
         val created = TableQuery[DeckChangedTable]
             .map(a => a.deckId)
             .distinct

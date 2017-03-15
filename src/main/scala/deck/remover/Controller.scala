@@ -9,7 +9,7 @@ import deck.DeckExistsQuery
 import io.circe.generic.auto._
 import io.circe.syntax._
 import org.http4s.HttpService
-import org.http4s.dsl.{Root, _}
+import org.http4s.dsl._
 import slick.driver.H2Driver.api._
 import slick.lifted.{ProvenShape, TableQuery, Tag}
 
@@ -83,7 +83,7 @@ private[remover] object Event {
 
 // Repository
 
-case class DeckDeletedRow(id: Long, t: Timestamp, deckId: String)
+private[remover] case class DeckDeletedRow(id: Long, t: Timestamp, deckId: String)
 
 class DeckDeletedTable(tag: Tag) extends Table[DeckDeletedRow](tag, "deck_deleted_events") {
     def id = column[Long]("id", O.PrimaryKey, O.AutoInc)

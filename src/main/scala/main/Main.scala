@@ -22,7 +22,7 @@ class Main(
             .mountService(deckChanger.httpService, "/api/deck/changer")
             .mountService(deckRemover.httpService, "/api/deck/remover")
             .mountService(deckViewer.httpService, "/api/deck/viewer")
-            .mountService(cardController.httpService, "/api/deck")
+            .mountService(cardController.httpService, "/api")
         builder.run
     }
 
