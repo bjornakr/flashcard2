@@ -1,5 +1,7 @@
 package card.editor
 
+import java.util.UUID
+
 import card.CardExistsQuery
 import deck.DeckExistsQuery
 import slick.lifted.TableQuery
@@ -18,5 +20,5 @@ class Repository(db: Database) extends DeckExistsQuery with CardExistsQuery {
     }
 
     def deckExists(deckId: String): Future[Boolean] = deckExists(db, deckId)
-    def cardExists(cardId: String): Future[Boolean] = cardExists(db)(cardId)
+    def cardExists(cardId: UUID): Future[Boolean] = cardExists(db, cardId)
 }

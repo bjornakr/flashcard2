@@ -12,6 +12,7 @@ object ErrorToHttpStatus {
             case InvalidUuidFormat(_) => BadRequest(message.message)
             case CannotBeEmpty(_) => BadRequest(message.message)
             case DatabaseError => InternalServerError(message.message)
+            case SpesificError(_) => InternalServerError(message.message)
             case _ => NotFound(message.message)
         }
     }

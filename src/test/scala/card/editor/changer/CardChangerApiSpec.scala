@@ -55,6 +55,8 @@ class CardChangerApiSpec extends ApiBaseSpec {
             }
         }
 
+        // TODO: Invalid UUID format
+
         "Deck does not exist" should {
             "give 404 Not Found w/ error message" in {
                 val body = toBody(validCard.asJson.noSpaces)

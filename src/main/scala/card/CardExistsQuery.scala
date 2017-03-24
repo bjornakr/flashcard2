@@ -1,5 +1,7 @@
 package card
 
+import java.util.UUID
+
 import card.editor.ChangedTable
 import slick.driver.H2Driver.api._
 import slick.lifted.TableQuery
@@ -7,8 +9,8 @@ import slick.lifted.TableQuery
 import scala.concurrent.Future
 
 trait CardExistsQuery {
-    def cardExists(db: Database)(cardId: String): Future[Boolean] = {
-        val created = TableQuery[ChangedTable]
+    def cardExists(db: Database, cardId: UUID): Future[Boolean] = {
+        val created: Query[Rep[String], String, Seq] = TableQuery[ChangedTable]
             .map(a => a.cardId)
             .distinct
 
@@ -17,7 +19,7 @@ trait CardExistsQuery {
             .distinct
 
         val query = created.filterNot(_.in(deleted))
-            .filter(_ === cardId)
+            .filter(_ === cardId.toString)
             .exists
 
         db.run(query.result)

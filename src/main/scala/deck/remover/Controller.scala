@@ -83,7 +83,7 @@ private[remover] object Event {
 
 // Repository
 
-private[remover] case class DeckDeletedRow(id: Long, t: Timestamp, deckId: String)
+case class DeckDeletedRow(id: Long, t: Timestamp, deckId: String)
 
 class DeckDeletedTable(tag: Tag) extends Table[DeckDeletedRow](tag, "deck_deleted_events") {
     def id = column[Long]("id", O.PrimaryKey, O.AutoInc)

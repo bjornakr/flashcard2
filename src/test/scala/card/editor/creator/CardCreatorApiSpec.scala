@@ -21,7 +21,7 @@ class CardCreatorApiSpec extends ApiBaseSpec {
         val action = slick.dbio.DBIO.seq(
             deckChangedTable += DeckChangedRow(0, createTimestamp(), existingDeckId, "Test Deck"),
             deckChangedTable += DeckChangedRow(0, createTimestamp(), deletedDeckId, "Deleted Deck"),
-            deckDeletedTable += DeckDeletedRow(0, createTimestamp(), deletedDeckId)
+            deckDeletedTable += deck.remover.DeckDeletedRow(0, createTimestamp(), deletedDeckId)
         )
         db.run(action)
     }

@@ -24,7 +24,7 @@ class Controller(appService: AppService) {
     }
 }
 
-case class ResponseDto(cardId: String)
+private[remover] case class ResponseDto(cardId: String)
 
 
 class AppService(repository: Repository) {
@@ -32,7 +32,7 @@ class AppService(repository: Repository) {
         UuidParser(cardId) match {
             case Left(e) => Left(e)
             case Right(uuid) => {
-                FutureAwaiter(repository.cardExists(cardId))(cardExists => {
+                FutureAwaiter(repository.cardExists(uuid))(cardExists => {
                     if (cardExists)
                         FutureAwaiter(repository.save(uuid))(id => Right(id))
                     else
@@ -45,7 +45,7 @@ class AppService(repository: Repository) {
 
 
 class Repository(db: Database) extends CardExistsQuery {
-    def cardExists(cardId: String): Future[Boolean] = cardExists(db)(cardId)
+    def cardExists(cardId: UUID): Future[Boolean] = cardExists(db, cardId)
 
     def save(cardId: UUID): Future[ResponseDto] = {
         val table = TableQuery[Table]
