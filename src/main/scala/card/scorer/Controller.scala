@@ -4,18 +4,17 @@ import java.sql.Timestamp
 import java.time.ZonedDateTime
 import java.util.UUID
 
-import org.http4s.dsl._
 import card.CardExistsQuery
 import common._
 import io.circe.generic.auto._
 import io.circe.syntax._
 import org.http4s.Response
+import org.http4s.dsl._
 import slick.driver.H2Driver.api._
 import slick.lifted.{ProvenShape, QueryBase, TableQuery, Tag}
-import slick.driver.H2Driver.api._
 
-import scala.concurrent.Future
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.Future
 import scalaz.concurrent.Task
 
 class Controller(appService: AppService) {
@@ -25,22 +24,11 @@ class Controller(appService: AppService) {
             case Right(r: ResponseDto) => Created(r.asJson.noSpaces)
         }
 
-    def win(cardId: String) = {
+    def win(cardId: String): Task[Response] =
         execute(appService.saveWinEvent(cardId))
-//        appService.saveWinEvent(cardId) match {
-//            case Left(e) => ErrorToHttpStatus(e)
-//            case Right(r: ResponseDto) => Created(r.asJson.noSpaces)
-//        }
-    }
 
-
-    def lose(cardId: String) = {
+    def lose(cardId: String): Task[Response] =
         execute(appService.saveLoseEvent(cardId))
-//        appService.saveLoseEvent(cardId) match {
-//            case Left(e) => ErrorToHttpStatus(e)
-//            case Right(r: ResponseDto) => Created(r.asJson.noSpaces)
-//        }
-    }
 }
 
 
@@ -60,29 +48,20 @@ private case object Lose extends Outcome {
 }
 
 class AppService(repository: Repository) {
-
-
     private def saveEvent(cardId: String, outcome: Outcome): Either[ErrorMessage, ResponseDto] = {
         UuidParser(cardId) match {
             case Left(e) => Left(e)
             case Right(uuid) => {
-                val x = FutureAwaiter(repository.cardExists(uuid))(cardExists => {
+                FutureAwaiter(repository.cardExists(uuid))(cardExists => {
                     if (cardExists) {
-                        val y = FutureAwaiter(repository.saveEvent(uuid, outcome))(_ => {
-                            val z = FutureAwaiter(repository.getWinLossCount(uuid))(Right(_))
-                            z
-//                            {
-//                                case None => Left(CouldNotFindEntityWithId("Storg", "001"))
-//                                case Some(r) => Right(r)
-//                            }
-//                            z
+                        FutureAwaiter(repository.saveEvent(uuid, outcome))(_ => {
+                            FutureAwaiter(repository.getWinLossCount(uuid))(Right(_))
                         })
-                        y
+
                     }
                     else
                         Left(CouldNotFindEntityWithId("Card", cardId))
                 })
-                x
             }
         }
     }
@@ -102,13 +81,13 @@ private[scorer] case class TableRow(id: Long, t: Timestamp, cardId: String, outc
 
 
 class Table(tag: Tag) extends slick.driver.H2Driver.api.Table[TableRow](tag, "card_scored_events") {
-    def id = column[Long]("id", O.PrimaryKey, O.AutoInc)
+    def id: Rep[Long] = column[Long]("id", O.PrimaryKey, O.AutoInc)
 
-    def t = column[Timestamp]("t")
+    def t: Rep[Timestamp] = column[Timestamp]("t")
 
-    def cardId = column[String]("card_id")
+    def cardId: Rep[String] = column[String]("card_id")
 
-    def outcome = column[String]("outcome")
+    def outcome: Rep[String] = column[String]("outcome")
 
     def * : ProvenShape[TableRow] = (id, t, cardId, outcome) <> (TableRow.tupled, TableRow.unapply)
 }
@@ -140,27 +119,11 @@ class Repository(db: Database) extends CardExistsQuery {
             .groupBy(t => t.outcome)
             .map { case (o, res) => o -> res.countDistinct }
 
-//            .map { case (id, r) => (id, r.filter(a => a.outcome === win).length, r.filter(_.outcome === lose).length) }
-
-        //        val result = query.result.map(_.map((id, wins, losses) => ResponseDto(id, wins, losses)))
-        //        val result = query.result.map(_.map(a => ResponseDto(a._1, a._2, a._3)))
-
-        //        query.filterNot((a: (Rep[String], Rep[Int], Rep[Int])) => )
-
-        val result = query.result //.headOption.map(_.map(a => ResponseDto(a._1, a._2, a._3)))
-        //            map(_.map(a => ResponseDto(a._1, a._2, a._3)))
+        val result = query.result
 
         db.run(result)
-            .map(_.toList.toMap[String, Int])
+            .map(_.toMap[String, Int])
             .map(a => ResponseDto(cardId.toString, a.getOrElse(win, 0), a.getOrElse(lose, 0)))
-
-        //.map(_.headOption.map(a => ResponseDto(a._1, a._2, a._3)))
-//        Future(None)
-//        val responseDto = ResponseDto("1111", 1, 0)
-//        val some = Some(responseDto)
-//        Future(Some(responseDto))
-
-
     }
 }
 
