@@ -89,7 +89,7 @@ class CardScorerApiSpec extends ApiBaseSpec  with Matchers {
                 assert(response.status == Status.BadRequest)
 
                 val body = extractBody(response)
-                assert(body == InvalidUuidFormat("!@#$%").message)
+                body shouldBe InvalidUuidFormat("!@#$%").message
             }
         }
 

@@ -37,13 +37,13 @@ class Controller(appService: AppService) {
 
 case class ResponseDto(cardId: String, wins: Int, losses: Int)
 
-private trait Outcome
+trait Outcome
 
-private case object Win extends Outcome {
+case object Win extends Outcome {
     override def toString: String = "win"
 }
 
-private case object Lose extends Outcome {
+case object Lose extends Outcome {
     override def toString: String = "lose"
 }
 
@@ -77,7 +77,7 @@ class AppService(repository: Repository) {
 }
 
 
-private[scorer] case class TableRow(id: Long, t: Timestamp, cardId: String, outcome: String)
+case class TableRow(id: Long, t: Timestamp, cardId: String, outcome: String)
 
 
 class Table(tag: Tag) extends slick.driver.H2Driver.api.Table[TableRow](tag, "card_scored_events") {
@@ -107,8 +107,6 @@ class Repository(db: Database) extends CardExistsQuery {
     }
 
     def getWinLossCount(cardId: UUID): Future[ResponseDto] = {
-
-
         val deleted = TableQuery[card.remover.Table]
             .map(_.cardId)
             .distinct

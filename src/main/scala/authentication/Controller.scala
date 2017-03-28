@@ -2,28 +2,20 @@ package authentication
 
 import java.time.Clock
 
-import common.CouldNotParse
-import org.http4s.util.CaseInsensitiveString
-import org.reactormonk.{CryptoBits, PrivateKey}
-
-import scalaz.Scalaz._
-import scalaz._
-import scalaz.concurrent.Task
-// import scalaz._
-// import Scalaz._
-// import scalaz.concurrent.Task
-
-import org.http4s._
-// import org.http4s._
-// import org.http4s.dsl._
-
 import cats.data.Xor
+import common.CouldNotParse
 import io.circe.generic.auto._
 import io.circe.parser.decode
 import io.circe.syntax._
 import org.http4s.dsl._
 import org.http4s.server._
-import org.http4s.{EntityDecoder, HttpService}
+import org.http4s.util.CaseInsensitiveString
+import org.http4s.{EntityDecoder, HttpService, _}
+import org.reactormonk.{CryptoBits, PrivateKey}
+
+import scalaz.Scalaz._
+import scalaz._
+import scalaz.concurrent.Task
 
 trait AccessLevel
 case object AdminAccess extends AccessLevel
